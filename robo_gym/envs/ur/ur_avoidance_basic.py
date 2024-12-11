@@ -152,7 +152,7 @@ class BasicAvoidanceUR(URBaseAvoidanceEnv):
         return state, reward, done, truncated, info
 
 class BasicAvoidanceURSim(BasicAvoidanceUR, Simulation):
-    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
+    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', extra_launch_args={}, **kwargs):
         self.cmd = cmd_utils.construct_roslaunch_command(
             module='ur_robot_server',
             launch_file='ur_robot_server.launch',
@@ -168,7 +168,8 @@ class BasicAvoidanceURSim(BasicAvoidanceUR, Simulation):
                 'n_objects': 1.0,
                 'object_0_model_name': 'sphere50',
                 'object_0_frame': 'target',
-                'ur_model': ur_model
+                'ur_model': ur_model,
+                **extra_launch_args,
             }
         )
 

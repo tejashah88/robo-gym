@@ -34,7 +34,7 @@ class Mir100Env(gym.Env):
 
     real_robot = False
     laser_len = 1022
-    max_episode_steps = 500 
+    max_episode_steps = 500
 
     def __init__(self, rs_address=None, **kwargs):
 
@@ -130,7 +130,7 @@ class Mir100Env(gym.Env):
         return 0, False, {}
 
     def step(self, action):
-        
+
         action = action.astype(np.float32)
 
         self.elapsed_steps += 1
@@ -421,10 +421,13 @@ class NoObstacleNavigationMir100(Mir100Env):
         return reward, done, info
 
 class NoObstacleNavigationMir100Sim(Simulation, NoObstacleNavigationMir100):
-    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, **kwargs):
+    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, extra_launch_args={}, **kwargs):
         self.cmd = cmd_utils.construct_roslaunch_command(
             module='mir100_robot_server',
-            launch_file='sim_robot_server.launch'
+            launch_file='sim_robot_server.launch',
+            launch_args={
+                **extra_launch_args,
+            }
         )
 
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
@@ -517,7 +520,7 @@ class ObstacleAvoidanceMir100(Mir100Env):
         mir_coords = np.array([rs_state[3],rs_state[4]])
         euclidean_dist_2d = np.linalg.norm(target_coords - mir_coords, axis=-1)
 
-        
+
         # Reward base
         base_reward = -50*euclidean_dist_2d
         if self.prev_base_reward is not None:
@@ -651,12 +654,13 @@ class ObstacleAvoidanceMir100(Mir100Env):
         self.sim_obstacles = [[x_0, y_0, yaw_0],[x_1, y_1, yaw_1],[x_2, y_2, yaw_2]]
 
 class ObstacleAvoidanceMir100Sim(Simulation, ObstacleAvoidanceMir100):
-    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, **kwargs):
+    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, extra_launch_args={}, **kwargs):
         self.cmd = cmd_utils.construct_roslaunch_command(
             module='mir100_robot_server',
             launch_file='sim_robot_server.launch',
             launch_args={
-                'world_name': 'lab_6x8.world'
+                'world_name': 'lab_6x8.world',
+                **extra_launch_args,
             }
         )
 

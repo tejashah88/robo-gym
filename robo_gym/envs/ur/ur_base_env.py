@@ -53,7 +53,7 @@ class URBaseEnv(gym.Env):
         self.abs_joint_pos_range = self.ur.get_max_joint_positions()
 
         self.rs_state = None
-        
+
         # Connect to Robot Server
         if rs_address:
             self.client = rs_client.Client(rs_address)
@@ -67,7 +67,7 @@ class URBaseEnv(gym.Env):
         float_params = {}
         state = {}
 
-        state_msg = robot_server_pb2.State(state = state, float_params = float_params, 
+        state_msg = robot_server_pb2.State(state = state, float_params = float_params,
                                             string_params = string_params, state_dict = rs_state)
         return state_msg
 
@@ -87,7 +87,7 @@ class URBaseEnv(gym.Env):
             options = {}
         joint_positions = options["joint_positions"] if "joint_positions" in options else None
 
-        if joint_positions: 
+        if joint_positions:
             assert len(joint_positions) == 6
         else:
             joint_positions = JOINT_POSITIONS
@@ -107,7 +107,7 @@ class URBaseEnv(gym.Env):
 
         # Set initial state of the Robot Server
         state_msg = self._set_initial_robot_server_state(rs_state)
-        
+
         if not self.client.set_state_msg(state_msg):
             raise RobotServerError("set_state")
 
@@ -146,8 +146,8 @@ class URBaseEnv(gym.Env):
         elif self.elapsed_steps >= self.max_episode_steps:
             done = True
             info['final_status'] = 'success'
-            
-        
+
+
         return 0, done, info
 
     def add_fixed_joints(self, action) -> np.ndarray:
@@ -158,7 +158,7 @@ class URBaseEnv(gym.Env):
         joint_pos_names = ['base_joint_position', 'shoulder_joint_position', 'elbow_joint_position',
                             'wrist_1_joint_position', 'wrist_2_joint_position', 'wrist_3_joint_position']
         joint_positions_dict = self._get_joint_positions()
-        
+
         joint_positions = np.array([joint_positions_dict.get(joint_pos) for joint_pos in joint_pos_names])
 
 
@@ -181,13 +181,13 @@ class URBaseEnv(gym.Env):
         # Convert action indexing from ur to ros
         rs_action = self.ur._ur_joint_list_to_ros_joint_list(rs_action)
 
-        return rs_action        
+        return rs_action
 
     def step(self, action) -> Tuple[np.array, float, bool, bool, dict]:
         if type(action) == list: action = np.array(action)
 
         action = action.astype(np.float32)
-            
+
         self.elapsed_steps += 1
 
         # Check if the action is contained in the action space
@@ -226,7 +226,7 @@ class URBaseEnv(gym.Env):
 
     def render(self):
         pass
-    
+
 
     def get_robot_server_composition(self) -> list:
         rs_state_keys = [
@@ -271,7 +271,7 @@ class URBaseEnv(gym.Env):
         if not len(keys) == len(rs_state.keys()):
             raise InvalidStateError("Robot Server state keys to not match. Different lengths.")
 
-        
+
         for key in keys:
             if key not in rs_state.keys():
                 raise InvalidStateError("Robot Server state keys to not match")
@@ -318,7 +318,7 @@ class URBaseEnv(gym.Env):
             numpy.array: State in environment format.
 
         """
-        # Joint positions 
+        # Joint positions
         joint_positions = []
         joint_positions_keys = ['base_joint_position', 'shoulder_joint_position', 'elbow_joint_position',
                             'wrist_1_joint_position', 'wrist_2_joint_position', 'wrist_3_joint_position']
@@ -329,7 +329,7 @@ class URBaseEnv(gym.Env):
         joint_positions = self.ur.normalize_joint_values(joints=joint_positions)
 
         # Joint Velocities
-        joint_velocities = [] 
+        joint_velocities = []
         joint_velocities_keys = ['base_joint_velocity', 'shoulder_joint_velocity', 'elbow_joint_velocity',
                             'wrist_1_joint_velocity', 'wrist_2_joint_velocity', 'wrist_3_joint_velocity']
         for velocity in joint_velocities_keys:
@@ -355,7 +355,7 @@ class URBaseEnv(gym.Env):
         # Joint positions range used to determine if there is an error in the sensor readings
         max_joint_positions = np.add(np.full(6, 1.0), pos_tolerance)
         min_joint_positions = np.subtract(np.full(6, -1.0), pos_tolerance)
-        # Joint velocities range 
+        # Joint velocities range
         max_joint_velocities = np.array([np.inf] * 6)
         min_joint_velocities = -np.array([np.inf] * 6)
         # Definition of environment observation_space
@@ -364,7 +364,7 @@ class URBaseEnv(gym.Env):
 
         return gym.spaces.Box(low=min_obs, high=max_obs, dtype=np.float32)
 
-    
+
     def _get_action_space(self)-> gym.spaces.Box:
         """Get environment action space.
 
@@ -379,7 +379,7 @@ class URBaseEnv(gym.Env):
 
 
 class EmptyEnvironmentURSim(URBaseEnv, Simulation):
-    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
+    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', extra_launch_args={}, **kwargs):
         self.cmd = cmd_utils.construct_roslaunch_command(
             module='ur_robot_server',
             launch_file='ur_robot_server.launch',
@@ -392,6 +392,7 @@ class EmptyEnvironmentURSim(URBaseEnv, Simulation):
                 'gazebo_gui': True,
                 'rs_mode': 'only_robot',
                 'ur_model': ur_model,
+                **extra_launch_args,
             }
         )
 

@@ -36,7 +36,7 @@ class EndEffectorPositioningUR(URBaseEnv):
     """
     def __init__(self, rs_address=None, fix_base=False, fix_shoulder=False, fix_elbow=False, fix_wrist_1=False, fix_wrist_2=False, fix_wrist_3=True, ur_model='ur5', rs_state_to_info=True, restrict_wrist_1=True, **kwargs):
         super().__init__(rs_address, fix_base, fix_shoulder, fix_elbow, fix_wrist_1, fix_wrist_2, fix_wrist_3, ur_model, rs_state_to_info)
-        
+
         self.restrict_wrist_1 = restrict_wrist_1
 
         self.successful_ending = False
@@ -56,7 +56,7 @@ class EndEffectorPositioningUR(URBaseEnv):
         min_joint_positions = np.subtract(np.full(6, -1.0), pos_tolerance)
         # Target coordinates range
         target_range = np.full(3, np.inf)
-        # Joint velocities range 
+        # Joint velocities range
         max_joint_velocities = np.array([np.inf] * 6)
         min_joint_velocities = - np.array([np.inf] * 6)
         # Cartesian coords of the target location
@@ -74,11 +74,11 @@ class EndEffectorPositioningUR(URBaseEnv):
 
         return gym.spaces.Box(low=min_obs, high=max_obs, dtype=np.float32)
 
-    
+
     def _set_initial_robot_server_state(self, rs_state, ee_target_pose) -> robot_server_pb2.State:
         string_params = {"object_0_function": "fixed_position"}
-        float_params = {"object_0_x": ee_target_pose[0], 
-                        "object_0_y": ee_target_pose[1], 
+        float_params = {"object_0_x": ee_target_pose[0],
+                        "object_0_y": ee_target_pose[1],
                         "object_0_z": ee_target_pose[2]}
         state = {}
 
@@ -96,20 +96,20 @@ class EndEffectorPositioningUR(URBaseEnv):
 
         """
         # Target polar coordinates
-        # Transform cartesian coordinates of target to polar coordinates 
+        # Transform cartesian coordinates of target to polar coordinates
         # with respect to the end effector frame
         target_coord = np.array([
-            rs_state['object_0_to_ref_translation_x'], 
+            rs_state['object_0_to_ref_translation_x'],
             rs_state['object_0_to_ref_translation_y'],
             rs_state['object_0_to_ref_translation_z']])
 
         ee_to_ref_frame_translation = np.array([
-            rs_state['ee_to_ref_translation_x'], 
+            rs_state['ee_to_ref_translation_x'],
             rs_state['ee_to_ref_translation_y'],
             rs_state['ee_to_ref_translation_z']])
 
         ee_to_ref_frame_quaternion = np.array([
-            rs_state['ee_to_ref_rotation_x'], 
+            rs_state['ee_to_ref_rotation_x'],
             rs_state['ee_to_ref_rotation_y'],
             rs_state['ee_to_ref_rotation_z'],
             rs_state['ee_to_ref_rotation_w']])
@@ -126,7 +126,7 @@ class EndEffectorPositioningUR(URBaseEnv):
         target_polar = utils.cartesian_to_polar_3d(target_coord_ee_frame)
 
 
-        # Joint positions 
+        # Joint positions
         joint_positions = []
         joint_positions_keys = ['base_joint_position', 'shoulder_joint_position', 'elbow_joint_position',
                             'wrist_1_joint_position', 'wrist_2_joint_position', 'wrist_3_joint_position']
@@ -137,7 +137,7 @@ class EndEffectorPositioningUR(URBaseEnv):
         joint_positions = self.ur.normalize_joint_values(joints=joint_positions)
 
         # Joint Velocities
-        joint_velocities = [] 
+        joint_velocities = []
         joint_velocities_keys = ['base_joint_velocity', 'shoulder_joint_velocity', 'elbow_joint_velocity',
                             'wrist_1_joint_velocity', 'wrist_2_joint_velocity', 'wrist_3_joint_velocity']
         for velocity in joint_velocities_keys:
@@ -153,7 +153,7 @@ class EndEffectorPositioningUR(URBaseEnv):
 
     def get_robot_server_composition(self) -> list:
         rs_state_keys = [
-            'object_0_to_ref_translation_x', 
+            'object_0_to_ref_translation_x',
             'object_0_to_ref_translation_y',
             'object_0_to_ref_translation_z',
             'object_0_to_ref_rotation_x',
@@ -224,7 +224,7 @@ class EndEffectorPositioningUR(URBaseEnv):
 
         # Randomize initial robot joint positions
         if randomize_start:
-            joint_positions_low = np.array(joint_positions) - np.array(RANDOM_JOINT_OFFSET) 
+            joint_positions_low = np.array(joint_positions) - np.array(RANDOM_JOINT_OFFSET)
             joint_positions_high = np.array(joint_positions) + np.array(RANDOM_JOINT_OFFSET)
             joint_positions = np.random.default_rng().uniform(low=joint_positions_low, high=joint_positions_high)
 
@@ -262,12 +262,12 @@ class EndEffectorPositioningUR(URBaseEnv):
         # Check if the environment state is contained in the observation space
         if not self.observation_space.contains(state):
             raise InvalidStateError()
-        
+
         # Check if current position is in the range of the initial joint positions
         for joint in self.joint_positions.keys():
             if not np.isclose(self.joint_positions[joint], rs_state[joint], atol=0.05):
                 raise InvalidStateError('Reset joint positions are not within defined range')
-            
+
         return state, {}
 
     def step(self, action) -> Tuple[np.array, float, bool, bool, dict]:
@@ -292,9 +292,9 @@ class EndEffectorPositioningUR(URBaseEnv):
                 self.last_position = joint_positions
 
 
-        
+
         return state, reward, done, truncated, info
-   
+
 
     def reward(self, rs_state, action) -> Tuple[float, bool, dict]:
         reward = 0
@@ -332,7 +332,7 @@ class EndEffectorPositioningUR(URBaseEnv):
             done = True
             info['final_status'] = 'max_steps_exceeded'
             info['target_coord'] = target_coord
-        
+
         return reward, done, info
 
     def _get_target_pose(self) -> np.ndarray:
@@ -364,9 +364,9 @@ class EndEffectorPositioningUR(URBaseEnv):
 
         return rs_action
 
-        
+
 class EndEffectorPositioningURSim(EndEffectorPositioningUR, Simulation):
-    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
+    def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', extra_launch_args={}, **kwargs):
         self.cmd = cmd_utils.construct_roslaunch_command(
             module='ur_robot_server',
             launch_file='ur_robot_server.launch',
@@ -382,7 +382,8 @@ class EndEffectorPositioningURSim(EndEffectorPositioningUR, Simulation):
                 'n_objects': 1.0,
                 'object_0_model_name': 'sphere50_no_collision',
                 'object_0_frame': 'target',
-                'ur_model': ur_model
+                'ur_model': ur_model,
+                **extra_launch_args,
             }
         )
 
