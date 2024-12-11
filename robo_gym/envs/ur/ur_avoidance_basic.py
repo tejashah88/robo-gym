@@ -9,6 +9,7 @@ otherwise wait for the obstacle to move away before proceeding
 from __future__ import annotations
 import numpy as np
 from typing import Tuple
+from robo_gym.utils import cmd_utils
 from robo_gym_server_modules.robot_server.grpc_msgs.python import robot_server_pb2
 from robo_gym.envs.simulation_wrapper import Simulation
 from robo_gym.envs.ur.ur_base_avoidance_env import URBaseAvoidanceEnv
@@ -147,20 +148,26 @@ class BasicAvoidanceUR(URBaseAvoidanceEnv):
         return state, reward, done, info
     
 class BasicAvoidanceURSim(BasicAvoidanceUR, Simulation):
-    cmd = "roslaunch ur_robot_server ur_robot_server.launch \
-        world_name:=tabletop_sphere50.world \
-        reference_frame:=base_link \
-        max_velocity_scale_factor:=0.2 \
-        action_cycle_rate:=20 \
-        rviz_gui:=false \
-        gazebo_gui:=true \
-        objects_controller:=true \
-        rs_mode:=1moving2points \
-        n_objects:=1.0 \
-        object_0_model_name:=sphere50 \
-        object_0_frame:=target"
     def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
-        self.cmd = self.cmd + ' ' + 'ur_model:=' + ur_model
+        self.cmd = cmd_utils.construct_roslaunch_command(
+            module='ur_robot_server',
+            launch_file='ur_robot_server.launch',
+            launch_args={
+                'world_name': 'tabletop_sphere50.world',
+                'reference_frame': 'base_link',
+                'max_velocity_scale_factor': 0.2,
+                'action_cycle_rate': 20,
+                'rviz_gui': False,
+                'gazebo_gui': True,
+                'objects_controller': True,
+                'rs_mode': '1moving2points',
+                'n_objects': 1.0,
+                'object_0_model_name': 'sphere50',
+                'object_0_frame': 'target',
+                'ur_model': ur_model
+            }
+        )
+
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
         BasicAvoidanceUR.__init__(self, rs_address=self.robot_server_ip, ur_model=ur_model, **kwargs)
 

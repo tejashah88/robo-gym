@@ -4,7 +4,7 @@ import copy
 import numpy as np
 import gymnasium as gym
 from typing import Tuple, Any
-from robo_gym.utils import ur_utils
+from robo_gym.utils import cmd_utils, ur_utils
 from robo_gym.utils.exceptions import InvalidStateError, RobotServerError, InvalidActionError
 import robo_gym_server_modules.robot_server.client as rs_client
 from robo_gym_server_modules.robot_server.grpc_msgs.python import robot_server_pb2
@@ -379,16 +379,22 @@ class URBaseEnv(gym.Env):
 
 
 class EmptyEnvironmentURSim(URBaseEnv, Simulation):
-    cmd = "roslaunch ur_robot_server ur_robot_server.launch \
-        world_name:=empty.world \
-        reference_frame:=base_link \
-        max_velocity_scale_factor:=0.2 \
-        action_cycle_rate:=20 \
-        rviz_gui:=true \
-        gazebo_gui:=true \
-        rs_mode:=only_robot"
     def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
-        self.cmd = self.cmd + ' ' + 'ur_model:=' + ur_model
+        self.cmd = cmd_utils.construct_roslaunch_command(
+            module='ur_robot_server',
+            launch_file='ur_robot_server.launch',
+            launch_args={
+                'world_name': 'empty.world',
+                'reference_frame': 'base_link',
+                'max_velocity_scale_factor': 0.2,
+                'action_cycle_rate': 20,
+                'rviz_gui': True,
+                'gazebo_gui': True,
+                'rs_mode': 'only_robot',
+                'ur_model': ur_model,
+            }
+        )
+
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
         URBaseEnv.__init__(self, rs_address=self.robot_server_ip, ur_model=ur_model, **kwargs)
 
