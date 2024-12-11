@@ -5,7 +5,7 @@ import gymnasium as gym
 from typing import Tuple, Any
 from scipy.spatial.transform import Rotation as R
 from robo_gym.utils.exceptions import InvalidStateError, RobotServerError
-from robo_gym.utils import utils
+from robo_gym.utils import utils, cmd_utils
 from robo_gym_server_modules.robot_server.grpc_msgs.python import robot_server_pb2
 from robo_gym.envs.simulation_wrapper import Simulation
 from robo_gym.envs.ur.ur_base_env import URBaseEnv
@@ -366,20 +366,26 @@ class EndEffectorPositioningUR(URBaseEnv):
 
         
 class EndEffectorPositioningURSim(EndEffectorPositioningUR, Simulation):
-    cmd = "roslaunch ur_robot_server ur_robot_server.launch \
-        world_name:=tabletop_sphere50_no_collision.world \
-        reference_frame:=base_link \
-        max_velocity_scale_factor:=0.1 \
-        action_cycle_rate:=10 \
-        rviz_gui:=true \
-        gazebo_gui:=true \
-        objects_controller:=true \
-        rs_mode:=1object \
-        n_objects:=1.0 \
-        object_0_model_name:=sphere50_no_collision \
-        object_0_frame:=target"
     def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, ur_model='ur5', **kwargs):
-        self.cmd = self.cmd + ' ' + 'ur_model:=' + ur_model
+        self.cmd = cmd_utils.construct_roslaunch_command(
+            module='ur_robot_server',
+            launch_file='ur_robot_server.launch',
+            launch_args={
+                'world_name': 'tabletop_sphere50_no_collision.world',
+                'reference_frame': 'base_link',
+                'max_velocity_scale_factor': 0.1,
+                'action_cycle_rate': 10,
+                'rviz_gui': True,
+                'gazebo_gui': True,
+                'objects_controller': True,
+                'rs_mode': '1object',
+                'n_objects': 1.0,
+                'object_0_model_name': 'sphere50_no_collision',
+                'object_0_frame': 'target',
+                'ur_model': ur_model
+            }
+        )
+
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
         EndEffectorPositioningUR.__init__(self, rs_address=self.robot_server_ip, ur_model=ur_model, **kwargs)
 

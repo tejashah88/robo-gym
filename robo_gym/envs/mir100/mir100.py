@@ -7,7 +7,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces, logger
 from gymnasium.utils import seeding
-from robo_gym.utils import utils, mir100_utils
+from robo_gym.utils import utils, mir100_utils, cmd_utils
 from robo_gym.utils.exceptions import InvalidStateError, RobotServerError
 import robo_gym_server_modules.robot_server.client as rs_client
 from robo_gym.envs.simulation_wrapper import Simulation
@@ -421,8 +421,12 @@ class NoObstacleNavigationMir100(Mir100Env):
         return reward, done, info
 
 class NoObstacleNavigationMir100Sim(Simulation, NoObstacleNavigationMir100):
-    cmd = "roslaunch mir100_robot_server sim_robot_server.launch"
     def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, **kwargs):
+        self.cmd = cmd_utils.construct_roslaunch_command(
+            module='mir100_robot_server',
+            launch_file='sim_robot_server.launch'
+        )
+
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
         NoObstacleNavigationMir100.__init__(self, rs_address=self.robot_server_ip, **kwargs)
 
@@ -647,8 +651,15 @@ class ObstacleAvoidanceMir100(Mir100Env):
         self.sim_obstacles = [[x_0, y_0, yaw_0],[x_1, y_1, yaw_1],[x_2, y_2, yaw_2]]
 
 class ObstacleAvoidanceMir100Sim(Simulation, ObstacleAvoidanceMir100):
-    cmd = "roslaunch mir100_robot_server sim_robot_server.launch world_name:=lab_6x8.world"
     def __init__(self, ip=None, lower_bound_port=None, upper_bound_port=None, gui=False, **kwargs):
+        self.cmd = cmd_utils.construct_roslaunch_command(
+            module='mir100_robot_server',
+            launch_file='sim_robot_server.launch',
+            launch_args={
+                'world_name': 'lab_6x8.world'
+            }
+        )
+
         Simulation.__init__(self, self.cmd, ip, lower_bound_port, upper_bound_port, gui, **kwargs)
         ObstacleAvoidanceMir100.__init__(self, rs_address=self.robot_server_ip, **kwargs)
 
